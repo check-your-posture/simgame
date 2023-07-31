@@ -27,35 +27,28 @@ class Ellipse(Rect):
         pygame.draw.ellipse(screen, (255, 0, 0), self, 2)
 
 class Entity:
-    # Initialize the entity with position and shape
     def __init__(self, shape):
         self.shape = shape
 
-    # Draw the entity on the screen
     def draw(self, screen):
         self.shape.draw(screen)
 
-    # Move the entity
     def move(self, dx, dy):
         self.shape.move_ip(dx, dy)
 
-class Obstacle(Entity):
-    # Initialize the obstacle with position, shape, and color
-    def __init__(self, shape):
-        super().__init__(shape)
-
-    # Check if a point is within the Obstacle
+    # Check if a point is within the Entity
     def contains_point(self, point):
         return self.shape.collidepoint(point)
+
+class Obstacle(Entity):
+    # Obstacle inherits from Entity, so we just pass all the arguments to the Entity constructor
+    def __init__(self, shape):
+        super().__init__(shape)
 
 class NPC(Entity):
     # NPC inherits from Entity, so we just pass all the arguments to the Entity constructor
     def __init__(self, shape):
         super().__init__(shape)
-
-    # Check if a point is within the NPC
-    def contains_point(self, point):
-        return self.shape.collidepoint(point)
 
 class Game:
     # Initialize the game
@@ -76,7 +69,6 @@ class Game:
         self.main_game_loop()
 
     class SelectedEntity:
-        # Initialize the selected entity
         def __init__(self, entity):
             self.entity = entity
 
@@ -85,7 +77,6 @@ class Game:
             self.entity.draw(screen)
             self.entity.shape.draw_outline(screen) # I'm not really sure if this is hacky?
 
-        # Move the selected entity
         def move(self, dx, dy):
             self.entity.move(dx, dy)
 
@@ -158,7 +149,8 @@ class Game:
         screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         npc_count = random.randint(4, 9)
         obstacle_count = random.randint(2, 4)
-        
+
+        # Lambdas are like on-the-fly functions, you can make them quick, small, wherever you need them, and you can pass them into functions as if they are objects.d
         generate_random_ellipse = lambda: Ellipse(random.randint(0, self.WIDTH), random.randint(0, self.HEIGHT), 20, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
         generate_random_square = lambda: Rect(random.randint(0, self.WIDTH), random.randint(0, self.HEIGHT), 30, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
         
@@ -168,7 +160,6 @@ class Game:
         entities = npcs + obstacles
         return screen, entities
 
-    # Main game loop
     def main_game_loop(self):
         selecting = False
         dragged_entity = None
@@ -196,6 +187,7 @@ class Game:
                 pygame.draw.rect(self.screen, (255, 0, 0), selection_rect, 2)
             pygame.display.flip()
 
+# For whatever reason Python programs need this stupid thing??
 if __name__ == '__main__':
     game = Game()
     game.main()
