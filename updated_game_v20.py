@@ -100,18 +100,21 @@ class Game:
         elif event.type == pygame.MOUSEBUTTONUP:
             selecting = False
             end_pos = event.pos
-            self.deselect_entities(selected_entities)
-            dragged_entity = None
-            if start_pos == end_pos:
-                clicked_entity = next((entity for entity in entities if entity.contains_point(event.pos)), None)
-                if clicked_entity:
-                    selected_entities.extend(self.select_entities([clicked_entity], clicked_entity.shape))
+            # If an entity was being dragged, skip the selection rectangle logic
+            if dragged_entity:
+                dragged_entity = None
             else:
-                selection_rect = pygame.Rect(min(start_pos[0], end_pos[0]), 
-                                             min(start_pos[1], end_pos[1]), 
-                                             abs(start_pos[0] - end_pos[0]), 
-                                             abs(start_pos[1] - end_pos[1]))
-                selected_entities.extend(self.select_entities(entities, selection_rect))
+                self.deselect_entities(selected_entities)
+                if start_pos == end_pos:
+                    clicked_entity = next((entity for entity in entities if entity.contains_point(event.pos)), None)
+                    if clicked_entity:
+                        selected_entities.extend(self.select_entities([clicked_entity], clicked_entity.shape))
+                else:
+                    selection_rect = pygame.Rect(min(start_pos[0], end_pos[0]), 
+                                                min(start_pos[1], end_pos[1]), 
+                                                abs(start_pos[0] - end_pos[0]), 
+                                                abs(start_pos[1] - end_pos[1]))
+                    selected_entities.extend(self.select_entities(entities, selection_rect))
             start_pos = (0, 0)
             end_pos = None
         elif event.type == pygame.MOUSEMOTION and selecting:
