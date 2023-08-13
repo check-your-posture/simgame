@@ -2,127 +2,25 @@ import pygame
 import sys
 import random
 from shape import Rect, Ellipse
-
-class Entity:
-    def __init__(self, shape):
-        self.shape = shape
-
-    def draw(self, screen):
-        self.shape.draw(screen)
-
-    def move(self, dx, dy):
-        self.shape.move_ip(dx, dy)
-
-    # Check if a point is within the Entity
-    def contains_point(self, point):
-        return self.shape.collidepoint(point)
-
-class Obstacle(Entity):
-    # Obstacle inherits from Entity, so we just pass all the arguments to the Entity constructor
-    def __init__(self, shape):
-        super().__init__(shape)
-
-class NPC(Entity):
-    # NPC inherits from Entity, so we just pass all the arguments to the Entity constructor
-    def __init__(self, shape):
-        super().__init__(shape)
+from entity import NPC, Obstacle
+from selection import Select
 
 class Game:
     # Initialize the game
     def __init__(self):
         pygame.init()
-        self.clock = pygame.time.Clock()
-        self.last_move_time = 0
+        #self.clock = pygame.time.Clock()
         self.WIDTH, self.HEIGHT = 640, 480
-        self.MOVE_DISTANCE = 1
-        self.MOVE_DELAY = 40
 
         # Setup the screen and entities
         self.screen, self.entities = self.setup()
+
+        self.select = Select()
         self.selected_entities = []
 
     # Start the main game loop
     def main(self):
         self.main_game_loop()
-
-    class SelectedEntity:
-        def __init__(self, entity):
-            self.entity = entity
-
-        # Draw the selected entity and a red outline
-        def draw(self, screen):
-            self.entity.draw(screen)
-            self.entity.shape.draw_outline(screen) # I'm not really sure if this is hacky?
-
-        def move(self, dx, dy):
-            self.entity.move(dx, dy)
-
-    # Select entities that are within the selection rectangle
-    def select_entities(self, entities, selection_rect):
-        return [self.SelectedEntity(entity) for entity in entities if entity.shape.colliderect(selection_rect)]
-
-    # Deselect all entities
-    def deselect_entities(self, selected_entities):
-        selected_entities.clear()
-
-    # Handle mouse events for selection
-    def handle_selection(self, event, entities, selected_entities, selecting, dragged_entity, start_pos, end_pos):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            selecting = True
-            start_pos = event.pos
-            dragged_entity = next((entity for entity in entities if entity.contains_point(event.pos)), None)
-            if dragged_entity:
-                self.deselect_entities(selected_entities)
-                selected_entities.extend(self.select_entities([dragged_entity], dragged_entity.shape))
-        elif event.type == pygame.MOUSEBUTTONUP:
-            selecting = False
-            end_pos = event.pos
-            # If an entity was being dragged, skip the selection rectangle logic
-            if dragged_entity:
-                dragged_entity = None
-            else:
-                self.deselect_entities(selected_entities)
-                if start_pos == end_pos:
-                    clicked_entity = next((entity for entity in entities if entity.contains_point(event.pos)), None)
-                    if clicked_entity:
-                        selected_entities.extend(self.select_entities([clicked_entity], clicked_entity.shape))
-                else:
-                    selection_rect = pygame.Rect(min(start_pos[0], end_pos[0]), 
-                                                min(start_pos[1], end_pos[1]), 
-                                                abs(start_pos[0] - end_pos[0]), 
-                                                abs(start_pos[1] - end_pos[1]))
-                    selected_entities.extend(self.select_entities(entities, selection_rect))
-            start_pos = (0, 0)
-            end_pos = None
-        elif event.type == pygame.MOUSEMOTION and selecting:
-            if dragged_entity and pygame.mouse.get_pressed(num_buttons=3)[0]:
-                dragged_entity.shape.center = event.pos
-            elif selecting:
-                end_pos = event.pos
-
-        return selecting, dragged_entity, start_pos, end_pos
-
-    # Handle keyboard events for movement
-    def handle_movement(self, selected_entities):
-        moved = False
-        dx = dy = 0
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_UP]:
-            dy = -self.MOVE_DISTANCE
-            moved = True
-        if keys[pygame.K_DOWN]:
-            dy = self.MOVE_DISTANCE
-            moved = True
-        if keys[pygame.K_LEFT]:
-            dx = -self.MOVE_DISTANCE
-            moved = True
-        if keys[pygame.K_RIGHT]:
-            dx = self.MOVE_DISTANCE
-            moved = True
-        if moved and pygame.time.get_ticks() - self.last_move_time > self.MOVE_DELAY:
-            for selected_entity in selected_entities:
-                selected_entity.move(dx, dy)
-            self.last_move_time = pygame.time.get_ticks()
 
     # Set up the game screen and entities
     def setup(self):
@@ -130,7 +28,7 @@ class Game:
         npc_count = random.randint(4, 9)
         obstacle_count = random.randint(2, 4)
 
-        # Lambdas are like on-the-fly functions, you can make them quick, small, wherever you need them, and you can pass them into functions as if they are objects.d
+        # Lambdas are like on-the-fly functions, you can make them quick, small, wherever you need them, and you can pass them into functions as if they are objects.
         generate_random_ellipse = lambda: Ellipse(random.randint(0, self.WIDTH), random.randint(0, self.HEIGHT), 20, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
         generate_random_square = lambda: Rect(random.randint(0, self.WIDTH), random.randint(0, self.HEIGHT), 30, (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
         
@@ -150,14 +48,15 @@ class Game:
                 if event.type == pygame.QUIT:
                     sys.exit()
                 else:
-                    selecting, dragged_entity, start_pos, end_pos = self.handle_selection(event, self.entities, self.selected_entities, selecting, dragged_entity, start_pos, end_pos)
-            self.handle_movement(self.selected_entities)
+                    selecting, dragged_entity, start_pos, end_pos = self.select.handle_selection(event, self.entities, self.selected_entities, selecting, dragged_entity, start_pos, end_pos)
+            self.select.handle_movement(self.selected_entities)
 
             self.screen.fill((0, 0, 0))
             for entity in self.entities:
                 entity.draw(self.screen)
             for selected_entity in self.selected_entities:
                 selected_entity.draw(self.screen)
+
             # Draws the selection box
             if selecting and end_pos is not None:
                 selection_rect = pygame.Rect(min(start_pos[0], end_pos[0]), 
@@ -167,7 +66,6 @@ class Game:
                 pygame.draw.rect(self.screen, (255, 0, 0), selection_rect, 2)
             pygame.display.flip()
 
-# For whatever reason Python programs need this stupid thing??
 if __name__ == '__main__':
     game = Game()
     game.main()
