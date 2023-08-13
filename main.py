@@ -1,30 +1,7 @@
 import pygame
 import sys
 import random
-
-# Move to a graphics specific file after verifying that this works
-class Rect(pygame.Rect):
-    def __init__(self, x, y, size, color):
-        super().__init__(x, y, size, size)
-        self.color = color
-
-    def draw(self, screen):
-        pygame.draw.rect(screen, self.color, self)
-    
-    def draw_outline(self, screen):
-        pygame.draw.rect(screen, (255, 0, 0), self, 2)
-
-class Ellipse(Rect):
-    def __init__(self, x, y, size, color):
-        super().__init__(x, y, size, color)
-        
-    # Overrides the Rect draw() method since pygame.ellipse shapes use rectangles under the hood,
-    # but still need to call a different draw function to appear as an ellipse
-    def draw(self, screen):
-        pygame.draw.ellipse(screen, self.color, self)
-    
-    def draw_outline(self, screen):
-        pygame.draw.ellipse(screen, (255, 0, 0), self, 2)
+from shape import Rect, Ellipse
 
 class Entity:
     def __init__(self, shape):
