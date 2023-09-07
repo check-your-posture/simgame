@@ -3,3 +3,4 @@ __pycache__/shape.cpython-310.pyc
 __pycache__/entity.cpython-310.pyc
 __pycache__/selection.cpython-310.pyc
 .vscode/launch.json
+.vscode/settings.json

@@ -13,10 +13,10 @@ class Select:
         # Draw the selected entity and a red outline
         def draw(self, screen):
             self.entity.draw(screen)
-            self.entity.shape.draw_outline(screen) # I'm not really sure if this is hacky?
+            self.entity.shape.draw_outline(screen) # TODO: Make a draw_outline() wrapper function for entity to avoid reaching so deep to call draw_outline()
 
-        def move(self, dx, dy):
-            self.entity.move(dx, dy)
+        def move(self, dx, dy, check_collision):
+            self.entity.move(dx, dy, check_collision)
 
     # Select entities that are within the selection rectangle
     def select_entities(self, entities, selection_rect):
@@ -64,7 +64,7 @@ class Select:
         return selecting, dragged_entity, start_pos, end_pos
 
     # Handle keyboard events for movement
-    def handle_movement(self, selected_entities):
+    def handle_movement(self, selected_entities, check_collision):
         moved = False
         dx = dy = 0
         keys = pygame.key.get_pressed()
@@ -82,5 +82,5 @@ class Select:
             moved = True
         if moved and pygame.time.get_ticks() - self.last_move_time > self.MOVE_DELAY:
             for selected_entity in selected_entities:
-                selected_entity.move(dx, dy)
+                selected_entity.move(dx, dy, check_collision)
             self.last_move_time = pygame.time.get_ticks()
