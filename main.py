@@ -38,6 +38,18 @@ class Game:
         entities = npcs + obstacles
         return screen, entities
 
+    # This is the first version of the collision checking. It's extremely simple, all it does is take the entity's current position and add the change in x and y to it, and then check if the new position collides with any other entity.
+    # It does this by iterating through all the existing entities, checking each to see if the moving entity will collide with any others.
+    # I want to improve on this in a few ways:
+    #   1. Abstract the code further by turning `colliderect()` into a function that can be called on any shape (not just rectangles)
+    #   2. Right now, to do the collision checking, we have to create a new tempory rectangle (this is the `pygame.Rect()` call below) and check if collision is going to happen at that new location.
+    #       The code below is sloppy because it assumes that every entity that's passed into the function is a rectangle, which will definitely not always be the case.
+    #       Perhaps what I'll do is I'll make it so that, down at the entity level where this lambda eventually gets called, the entity itself will be responsible for passing in an updated shape.
+    #       That way, the collision checking lambda can be written in a way that doesn't assume the entity is a rectangle.
+    def check_collision(self, entity, dx, dy):
+        new_position = pygame.Rect(entity.shape.x + dx, entity.shape.y + dy, entity.shape.width, entity.shape.height)
+        return any(new_position.colliderect(other_entity.shape) for other_entity in self.entities if other_entity != entity)
+
     def main_game_loop(self):
         selecting = False
         dragged_entity = None
@@ -48,8 +60,12 @@ class Game:
                 if event.type == pygame.QUIT:
                     sys.exit()
                 else:
-                    selecting, dragged_entity, start_pos, end_pos = self.select.handle_selection(event, self.entities, self.selected_entities, selecting, dragged_entity, start_pos, end_pos)
-            self.select.handle_movement(self.selected_entities)
+                    selecting, dragged_entity, start_pos, end_pos = self.select.handle_selection(event, self.entities, self.selected_entities, selecting, dragged_entity, start_pos, end_pos) 
+
+            # For clarity: what I'm doing here is passing the check_collision function itself into the handle_movement function.
+            # This way, the handle_movement function can call the check_collision function (do collision checking) whenever it needs to, and it doesn't need to know anything about how the collision checking works.
+            # This will also allow us to change the check_collision function later on.
+            self.select.handle_movement(self.selected_entities, self.check_collision)
 
             self.screen.fill((0, 0, 0))
             for entity in self.entities:
